@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket/socket";
 import { initSocketListeners } from "../socket/listeners";
@@ -21,6 +21,7 @@ ${SPACE_FONT_IMPORT}
 .ai-back{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer}
 .ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;position:relative;z-index:2}
 .ai-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(18px);box-shadow:0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.05);border-radius:16px;padding:16px}
+.ai-card-preview{display:flex;flex-direction:column;min-height:0}
 .ai-card ::-webkit-scrollbar{width:4px;height:4px}
 .ai-card ::-webkit-scrollbar-thumb{background:rgba(96,165,250,.35);border-radius:8px}
 .ai-card ::-webkit-scrollbar-track{background:rgba(255,255,255,.04)}
@@ -38,7 +39,7 @@ ${SPACE_FONT_IMPORT}
 .ai-btn-save{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.16);color:#86efac}
 .ai-err{margin-top:12px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fecaca;padding:10px 12px;border-radius:10px;font-size:13px}
 .ai-ok{margin-top:12px;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:#86efac;padding:10px 12px;border-radius:10px;font-size:13px}
-.ai-list{display:flex;flex-direction:column;gap:10px;max-height:520px;overflow:auto;padding-right:4px}
+.ai-list{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;overflow:auto;padding-right:4px}
 .ai-q{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);border-radius:12px;padding:12px}
 .ai-qt{font-weight:700;margin-bottom:8px}
 .ai-op{font-size:13px;color:rgba(255,255,255,.8);margin-bottom:4px}
@@ -46,7 +47,7 @@ ${SPACE_FONT_IMPORT}
 .ai-input[type="number"]::-webkit-outer-spin-button,
 .ai-input[type="number"]::-webkit-inner-spin-button{opacity:1;filter:invert(1) brightness(1.2)}
 .ai-input[type="number"]{-moz-appearance:textfield;appearance:textfield}
-@media (max-width: 860px){.ai-grid{grid-template-columns:1fr}}
+@media (max-width: 860px){.ai-grid{grid-template-columns:1fr}.ai-card-preview .ai-list{flex:none;max-height:60vh}}
 `;
 
 const emitAddQuestion = ({ roomCode, question, playerId }) =>
@@ -84,6 +85,8 @@ export default function AiQuestionBuilder() {
 	const [error, setError] = useState("");
 	const [info, setInfo] = useState("");
 	const [questions, setQuestions] = useState([]);
+	const [previewHeight, setPreviewHeight] = useState(null);
+	const formCardRef = useRef(null);
 
 	const isHost = useMemo(
 		() => Boolean(room?.hostId && playerId && room.hostId === playerId),
@@ -104,6 +107,29 @@ export default function AiQuestionBuilder() {
 		if (!room?.roomCode) navigate("/");
 		else if (!isHost) navigate("/lobby");
 	}, [room?.roomCode, isHost, navigate]);
+
+	useEffect(() => {
+		const formEl = formCardRef.current;
+		if (!formEl) return;
+
+		const syncPreviewHeight = () => {
+			if (window.innerWidth <= 860) {
+				setPreviewHeight(null);
+				return;
+			}
+			setPreviewHeight(formEl.offsetHeight || null);
+		};
+
+		syncPreviewHeight();
+		const observer = new ResizeObserver(syncPreviewHeight);
+		observer.observe(formEl);
+		window.addEventListener("resize", syncPreviewHeight);
+
+		return () => {
+			observer.disconnect();
+			window.removeEventListener("resize", syncPreviewHeight);
+		};
+	}, []);
 
 	const onUpload = async (event) => {
 		const file = event.target.files?.[0];
@@ -245,7 +271,7 @@ export default function AiQuestionBuilder() {
 					</div>
 
 					<div className="ai-grid">
-						<div className="ai-card">
+						<div className="ai-card" ref={formCardRef}>
 							<label className="ai-label">Prompt or Topic</label>
 							<textarea
 								className="ai-text"
@@ -318,7 +344,10 @@ export default function AiQuestionBuilder() {
 							{info ? <div className="ai-ok">{info}</div> : null}
 						</div>
 
-						<div className="ai-card">
+						<div
+							className="ai-card ai-card-preview"
+							style={previewHeight ? { height: `${previewHeight}px` } : undefined}
+						>
 							<label className="ai-label">Preview</label>
 							<div className="ai-list">
 								{questions.map((q, idx) => (
