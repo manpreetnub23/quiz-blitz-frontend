@@ -1,6 +1,7 @@
 import { useState } from "react";
 import socket from "../socket/socket";
 import { SPACE_FONT_IMPORT } from "../theme/space";
+import useGameStore from "../store/useGameStore";
 
 const OPT = [
 	{
@@ -145,11 +146,12 @@ const CheckIcon = ({ color }) => (
 
 export default function QuestionCard({ question, roomCode }) {
 	const [picked, setPicked] = useState(null);
+	const playerId = useGameStore((s) => s.playerId);
 
 	const pick = (index, opt) => {
 		if (picked !== null) return;
 		setPicked(index);
-		socket.emit("submit_answer", { roomCode, answer: opt });
+		socket.emit("submit_answer", { roomCode, answer: opt, playerId });
 	};
 
 	return (
