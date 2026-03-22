@@ -1,18 +1,26 @@
 # Quiz Frontend (React + Vite + Socket.IO)
 
-Realtime multiplayer quiz frontend for the QuizBlitz app.
+Realtime multiplayer quiz frontend for creating/joining rooms, running live quizzes, and generating host questions with AI.
 
 ## Features
 
-- Create room / join room with name + room code
-- Host-only lobby controls (add questions, launch quiz)
-- Animated game phases:
+- Create room or join with name + room code
+- Host controls in lobby:
+  - add manual MCQ questions
+  - delete added questions before launch
+  - start quiz
+- AI Question Builder page (`/ai-questions`):
+  - prompt/topic + number of MCQs
+  - optional chapter/context text
+  - upload `PDF`, `DOCX`, `TXT`, `MD` to extract text
+  - preview generated MCQs
+  - add generated questions into the same room
+- Realtime game phases:
   - prepare
   - question
   - result
-  - final leaderboard
-- Socket-based realtime sync with backend
-- Zustand store for global game state
+  - finished leaderboard
+- Socket sync with backend + Zustand global state
 
 ## Tech Stack
 
@@ -21,14 +29,15 @@ Realtime multiplayer quiz frontend for the QuizBlitz app.
 - React Router
 - Socket.IO Client
 - Zustand
-- Tailwind CSS
+- Tailwind CSS 4
 
 ## Routes
 
-- `/` - Home (create/join room)
-- `/lobby` - Lobby (players + host controls)
-- `/game` - Live quiz screen
-- `/result` - Final leaderboard
+- `/` Home (create/join room)
+- `/lobby` Lobby (players + host controls)
+- `/ai-questions` AI MCQ generation and upload-assisted question creation
+- `/game` Live quiz screen
+- `/result` Final leaderboard
 
 ## Environment
 
@@ -38,48 +47,38 @@ Create `frontend/.env.local`:
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-## Install
+## Install and Run
 
 ```bash
 cd frontend
 npm install
-```
-
-## Run
-
-Development:
-
-```bash
 npm run dev
 ```
 
-Build:
+Other scripts:
 
-```bash
-npm run build
-```
+- `npm run build`
+- `npm run preview`
+- `npm run lint`
 
-Preview production build:
+## API Usage from Frontend
 
-```bash
-npm run preview
-```
+The AI page calls backend REST endpoints:
 
-Lint:
+- `POST /api/ai/extract-text` (multipart form file upload)
+- `POST /api/ai/generate-mcq` (JSON body)
 
-```bash
-npm run lint
-```
+After generation, questions are saved through socket `add_question` and appear in lobby immediately.
 
 ## Socket Flow
 
-Socket client is created in:
+Socket client:
 - `src/socket/socket.js`
 
-Global listeners are registered once in:
+Global listeners:
 - `src/socket/listeners.js`
 
-Main incoming events handled:
+Main server events consumed:
 - `player_identity`
 - `room_created`
 - `player_joined`
@@ -94,10 +93,10 @@ Main incoming events handled:
 
 ## State Management
 
-Global state lives in:
+Store:
 - `src/store/useGameStore.js`
 
-Important state keys:
+Important keys:
 - `room`
 - `playerId`
 - `playerName`
@@ -110,5 +109,5 @@ Important state keys:
 
 ## Notes
 
-- This frontend expects the backend Socket.IO server to be running.
-- `playerId` and `roomCode` are cached in `localStorage` for reconnect/rejoin behavior.
+- Backend (Socket.IO + REST AI endpoints) must be running first.
+- `playerId` and `roomCode` are cached in `localStorage` to support rejoin/reconnect.

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import socket from "../socket/socket";
+import { SPACE_FONT_IMPORT } from "../theme/space";
 
 const OPT = [
 	{
@@ -41,7 +42,7 @@ const OPT = [
 ];
 
 const S = `
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Exo+2:wght@400;500;600;700;800&display=swap');
+${SPACE_FONT_IMPORT}
 .qc{animation:qcIn 0.5s cubic-bezier(0.22,1,0.36,1) both;}
 @keyframes qcIn{from{opacity:0;transform:scale(0.94) translateY(24px)}to{opacity:1;transform:scale(1) translateY(0)}}
 

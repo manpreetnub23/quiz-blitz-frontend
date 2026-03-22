@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { SPACE_FONT_IMPORT } from "../theme/space";
 const S = `
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&display=swap');
+${SPACE_FONT_IMPORT}
 .tmr{display:flex;align-items:center;gap:9px;padding:6px 12px 6px 6px;border-radius:12px;border:1.5px solid;transition:all 0.3s;}
 .tmr-ring{position:relative;width:44px;height:44px;flex-shrink:0;}
 .tmr-ring svg{transform:rotate(-90deg);}
